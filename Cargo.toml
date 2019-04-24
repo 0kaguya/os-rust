@@ -12,6 +12,9 @@ edition = "2018"
 
 [dependencies]
 bootloader = "0.5.1"
+volatile = "0.2.3"
+lazy_static = { version = "1.0", features = ["spin_no_std"] }
+spin = "0.4.9"
 
 [package.metadata.bootimage]
 default-target = "x86_64-rust_os.json"
