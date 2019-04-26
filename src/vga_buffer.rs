@@ -96,20 +96,19 @@ impl Writer {
     }
 
     fn new_line(&mut self) {
-        if self.row_position < BUFFER_HEIGHT {
+        if self.row_position < BUFFER_HEIGHT - 1 {
             self.row_position += 1;
             self.column_position = 0;
         } else {
-            for row in 0 .. self.row_position - 1 {
+            for row in 0 .. self.row_position {
                 for column in 0 .. BUFFER_WIDTH {
-                    let char = self.buffer.chars[row+1][column].read();
-                    self.buffer.chars[row][column].write(char);
+                    let tmp = self.buffer.chars[row+1][column].read();
+                    self.buffer.chars[row][column].write(tmp);
                 }
             }
             self.clear_row(self.row_position);
             self.column_position = 0;
         }
-
     }
 
     fn clear_row(&mut self, row: usize) {
