@@ -150,3 +150,113 @@ macro_rules! println {
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::io::empty;
+
+    fn construct_writer() -> Writer {
+        use std::boxed::Box;
+
+        let buffer = construct_buffer();
+
+        Writer {
+            row_position: 0,
+            column_position: 0,
+            color_code: ColorCode::new(Color::White, Color::Black),
+            buffer: Box::leak(Box::new(buffer))
+        }
+    }
+
+    fn construct_buffer() -> Buffer {
+        use array_init::array_init;
+
+        Buffer {
+            chars: array_init(|_| array_init(|_| Volatile::new(empty_char())))
+        }
+    }
+
+    fn empty_char() -> ScreenChar {
+        ScreenChar {
+            ascii_character: b' ',
+            color_code: ColorCode::new(Color::White, Color::Black)
+        }
+    }
+
+    #[test]
+    fn write_byte() {
+        let mut writer = construct_writer();
+        writer.write_byte(b'x');
+        writer.write_byte(b'y');
+
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+
+                if i == 0 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, b'x')
+                } else if i == 0 && j == 1 {
+                    assert_eq!(screen_char.ascii_character, b'y')
+                } else {
+                    assert_eq!(screen_char, empty_char())
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn write_string() {
+        let mut writer = construct_writer();
+        writer.write_string("abc\n");
+        writer.write_string("xyz");
+
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+
+                match screen_char.ascii_character {
+                    b'a' | b'b' | b'c' => assert_eq!(i, 0),
+                    b'x' | b'y' | b'z' => assert_eq!(i, 1),
+                    _ => assert_eq!(screen_char, empty_char())
+                };
+
+                match screen_char.ascii_character {
+                    b'a' | b'x' => assert_eq!(j, 0),
+                    b'b' | b'y' => assert_eq!(j, 1),
+                    b'c' | b'z' => assert_eq!(j, 2),
+                    _ => assert_eq!(screen_char, empty_char())
+                };
+            }
+        }
+    }
+
+    #[test]
+    fn write_formatted() {
+        use core::fmt::Write;
+
+        let mut writer = construct_writer();
+        writeln!(writer, "{}", 2.34);
+        writeln!(writer, "{}", "dust");
+
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+
+                match screen_char.ascii_character {
+                    b'2' | b'.' | b'3' | b'4' => assert_eq!(i, 0),
+                    b'd' | b'u' | b's' | b't' => assert_eq!(i, 1),
+                    _ => assert_eq!(screen_char, empty_char()),
+                }
+
+                match screen_char.ascii_character {
+                    b'2' | b'd' => assert_eq!(j, 0),
+                    b'.' | b'u' => assert_eq!(j, 1),
+                    b'3' | b's' => assert_eq!(j, 2),
+                    b'4' | b't' => assert_eq!(j, 3),
+                    _ => assert_eq!(screen_char, empty_char()),
+                }
+            }
+        }
+    }
+}

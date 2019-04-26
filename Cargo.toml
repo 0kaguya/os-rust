@@ -16,5 +16,8 @@ volatile = "0.2.3"
 lazy_static = { version = "1.0", features = ["spin_no_std"] }
 spin = "0.4.9"
 
+[dev-dependencies]
+array-init = "0.0.3"
+
 [package.metadata.bootimage]
 default-target = "x86_64-rust_os.json"
