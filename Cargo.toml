@@ -21,7 +21,12 @@ x86_64 = "0.5.2"
 [dev-dependencies]
 array-init = "0.0.3"
 
+[features]
+integration-test = []
+
 [package.metadata.bootimage]
 default-target = "x86_64-rust_os.json"
 run-command = ["qemu-system-x86_64", "-drive", "format=raw,file={}", "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04"]
+run-args = ["-serial", "mon:stdio"]
+test-args = ["-display", "none"]
 
