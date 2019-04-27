@@ -7,6 +7,7 @@
 
 
 mod vga_buffer;
+mod serial;
 
 use core::panic::PanicInfo;
 
@@ -21,5 +22,6 @@ fn panic(info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello Rust");
+    serial_println!("From Guest");
     loop {}
 }
